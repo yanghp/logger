@@ -73,52 +73,52 @@ func (o *Options) String() string {
 // AddFlags 解析flag 到options
 func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&o.Level, flagLevel, o.Level, "Minimum log output 'LEVEL'.")
-	fs.BoolVar(&o.DisableCaller,flagDisableCaller,o.DisableCaller,"Disable output of caller information in the log.")
-	fs.BoolVar(&o.DisableStacktrace,flagDisableStacktrace,o.DisableStacktrace,"Disable the log record a stack for all messages at or above panic level.")
-	fs.StringVar(&o.Format,flagFormat,o.Format,"Log output `FORMAT`, support plain or json logs.")
-	fs.BoolVar(&o.EnableColor,flagEnableColor,o.EnableColor,"Enable output ansi colors in plain format logs.")
-	fs.StringSliceVar(&o.OutputPaths,flagOutputPaths,o.OutputPaths,"Output paths of log.")
-	fs.StringSliceVar(&o.ErrorOutputPaths,flagErrorOutputPaths,o.ErrorOutputPaths,"Error output paths of log.")
-	fs.BoolVar(&o.Development,flagDevelopment,o.Development,"Development puts the logger in development mode, which changes the behavior of DPanicLevel and takes stack traces more liberally")
-	fs.StringVar(&o.Name,flagName,o.Name,"The name of the logger.")
+	fs.BoolVar(&o.DisableCaller, flagDisableCaller, o.DisableCaller, "Disable output of caller information in the log.")
+	fs.BoolVar(&o.DisableStacktrace, flagDisableStacktrace, o.DisableStacktrace, "Disable the log record a stack for all messages at or above panic level.")
+	fs.StringVar(&o.Format, flagFormat, o.Format, "Log output `FORMAT`, support plain or json logs.")
+	fs.BoolVar(&o.EnableColor, flagEnableColor, o.EnableColor, "Enable output ansi colors in plain format logs.")
+	fs.StringSliceVar(&o.OutputPaths, flagOutputPaths, o.OutputPaths, "Output paths of log.")
+	fs.StringSliceVar(&o.ErrorOutputPaths, flagErrorOutputPaths, o.ErrorOutputPaths, "Error output paths of log.")
+	fs.BoolVar(&o.Development, flagDevelopment, o.Development, "Development puts the logger in development mode, which changes the behavior of DPanicLevel and takes stack traces more liberally")
+	fs.StringVar(&o.Name, flagName, o.Name, "The name of the logger.")
 }
 
-func(o *Options) Build()error{
+func (o *Options) Build() error {
 	var zapLevel zapcore.Level
-	if err:=zapLevel.UnmarshalText([]byte(o.Level));err !=nil{
+	if err := zapLevel.UnmarshalText([]byte(o.Level)); err != nil {
 		zapLevel = zapcore.InfoLevel
 	}
 	// 日志级别大写
-	encodeLevel:= zapcore.CapitalLevelEncoder
-	zapConf:=zap.Config{
-		Level: zap.NewAtomicLevelAt(zapLevel),
-		Development: o.Development,
-		DisableCaller: o.DisableCaller,
+	encodeLevel := zapcore.CapitalLevelEncoder
+	zapConf := zap.Config{
+		Level:             zap.NewAtomicLevelAt(zapLevel),
+		Development:       o.Development,
+		DisableCaller:     o.DisableCaller,
 		DisableStacktrace: o.DisableStacktrace,
 		Sampling: &zap.SamplingConfig{
-			Initial: 100,
+			Initial:    100,
 			Thereafter: 100,
 		},
 		Encoding: o.Format,
 		EncoderConfig: zapcore.EncoderConfig{
-			MessageKey: "message",
-			LevelKey: "level",
-			TimeKey: "timestamp",
-			NameKey: "logger",
-			CallerKey: "call",
-			StacktraceKey: "stacktrace",
-			LineEnding: zapcore.DefaultLineEnding,
-			EncodeLevel: encodeLevel,
-			EncodeTime: timeEncoder,
-			EncodeDuration:milliSecondDurationEncoder,
-			EncodeCaller: zapcore.ShortCallerEncoder,
-			EncodeName: zapcore.FullNameEncoder,
+			MessageKey:     "message",
+			LevelKey:       "level",
+			TimeKey:        "timestamp",
+			NameKey:        "logger",
+			CallerKey:      "call",
+			StacktraceKey:  "stacktrace",
+			LineEnding:     zapcore.DefaultLineEnding,
+			EncodeLevel:    encodeLevel,
+			EncodeTime:     timeEncoder,
+			EncodeDuration: milliSecondDurationEncoder,
+			EncodeCaller:   zapcore.ShortCallerEncoder,
+			EncodeName:     zapcore.FullNameEncoder,
 		},
-		OutputPaths: o.OutputPaths,
+		OutputPaths:      o.OutputPaths,
 		ErrorOutputPaths: o.ErrorOutputPaths,
 	}
-	logger,err:=zapConf.Build(zap.AddStacktrace(zapcore.PanicLevel))
-	if err !=nil{
+	logger, err := zapConf.Build(zap.AddStacktrace(zapcore.PanicLevel))
+	if err != nil {
 		return err
 	}
 	zap.RedirectStdLog(logger.Named(o.Name))

@@ -5,7 +5,6 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-
 // Field is an alias for the field structure in the underlying log frame.
 type Field = zap.Field
 

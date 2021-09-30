@@ -6,9 +6,8 @@ import (
 
 type key int
 
-const logContextKey key= iota
+const logContextKey key = iota
 
-func WithContext(ctx context.Context) context.Context{
+func WithContext(ctx context.Context) context.Context {
 	return std.WithContext(ctx)
 }
-
