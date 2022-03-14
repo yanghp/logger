@@ -76,21 +76,22 @@ type zapLogger struct {
 
 //noopInfoLogger is a logger.InfoLogger that's always disabled and does nothing.
 type noopInfoLogger struct {
-
 }
+
 var disabledInfoLogger = &noopInfoLogger{}
 
-func (n *noopInfoLogger) Info(msg string, fields ...Field){}
+func (n *noopInfoLogger) Info(msg string, fields ...Field) {}
 
-func (n *noopInfoLogger)Infof(format string, v ...interface{}){}
+func (n *noopInfoLogger) Infof(format string, v ...interface{}) {}
 
-func (n *noopInfoLogger)Infow(msg string, kv ...interface{}){}
+func (n *noopInfoLogger) Infow(msg string, kv ...interface{}) {}
 
-func (n *noopInfoLogger)Enabled() bool{
+func (n *noopInfoLogger) Enabled() bool {
 	return false
 }
+
 func (l *zapLogger) Debug(msg string, fields ...Field) {
-	l.zapLogger.Debug(msg,fields...)
+	l.zapLogger.Debug(msg, fields...)
 }
 
 func (l *zapLogger) Debugf(format string, v ...interface{}) {
@@ -98,47 +99,47 @@ func (l *zapLogger) Debugf(format string, v ...interface{}) {
 }
 
 func (l *zapLogger) Debugw(msg string, kv ...interface{}) {
-	l.zapLogger.Sugar().Debugw(msg,kv ...)
+	l.zapLogger.Sugar().Debugw(msg, kv...)
 }
 
 func (l *zapLogger) Warn(msg string, fields ...Field) {
-	l.zapLogger.Warn(msg,fields...)
+	l.zapLogger.Warn(msg, fields...)
 }
 
 func (l *zapLogger) Warnf(format string, v ...interface{}) {
-	l.zapLogger.Sugar().Warnf(format,v...)
+	l.zapLogger.Sugar().Warnf(format, v...)
 }
 
 func (l *zapLogger) Warnw(msg string, kv ...interface{}) {
-	l.zapLogger.Sugar().Warnw(msg,kv ...)
+	l.zapLogger.Sugar().Warnw(msg, kv...)
 }
 
 func (l *zapLogger) Error(msg string, fields ...Field) {
-	l.zapLogger.Error(msg,fields ...)
+	l.zapLogger.Error(msg, fields...)
 }
 
 func (l *zapLogger) Errorf(format string, v ...interface{}) {
-	l.zapLogger.Sugar().Errorf(format,v...)
+	l.zapLogger.Sugar().Errorf(format, v...)
 }
 
 func (l *zapLogger) Errorw(msg string, kv ...interface{}) {
-	l.zapLogger.Sugar().Errorw(msg,kv...)
+	l.zapLogger.Sugar().Errorw(msg, kv...)
 }
 
 func (l *zapLogger) Fatal(msg string, fields ...Field) {
-	l.zapLogger.Fatal(msg,fields ...)
+	l.zapLogger.Fatal(msg, fields...)
 }
 
 func (l *zapLogger) Fatalf(format string, v ...interface{}) {
-	l.zapLogger.Sugar().Fatalf(format,v...)
+	l.zapLogger.Sugar().Fatalf(format, v...)
 }
 
 func (l *zapLogger) Fatalw(msg string, kv ...interface{}) {
-	l.zapLogger.Sugar().Fatalw(msg,kv ...)
+	l.zapLogger.Sugar().Fatalw(msg, kv...)
 }
 
 func (l *zapLogger) V(level int) InfoLogger {
-	if level < 0 || level >1{
+	if level < 0 || level > 1 {
 		panic("log level error: valid log level is [0, 1]")
 	}
 	lvl := zapcore.Level(-1 * level)
@@ -153,11 +154,11 @@ func (l *zapLogger) V(level int) InfoLogger {
 
 func (l *zapLogger) Write(p []byte) (n int, err error) {
 	l.zapLogger.Info(string(p))
-	return len(p),nil
+	return len(p), nil
 }
 
 func (l *zapLogger) WithValues(kv ...interface{}) Logger {
-	newLogger := l.zapLogger.With(handleFields(l.zapLogger,kv)...)
+	newLogger := l.zapLogger.With(handleFields(l.zapLogger, kv)...)
 	return NewLogger(newLogger)
 }
 
@@ -173,7 +174,7 @@ func NewLogger(l *zap.Logger) Logger {
 }
 
 func (l *zapLogger) WithName(name string) Logger {
-	newLogger:= l.zapLogger.Named(name)
+	newLogger := l.zapLogger.Named(name)
 	return NewLogger(newLogger)
 }
 

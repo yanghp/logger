@@ -6,7 +6,7 @@ import (
 )
 
 func timeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
-	enc.AppendString(t.Format("2016-01-02 15:04:05.000"))
+	enc.AppendString(t.Format("2006-01-02 15:04:05.000"))
 }
 
 func milliSecondDurationEncoder(d time.Duration, enc zapcore.PrimitiveArrayEncoder) {
