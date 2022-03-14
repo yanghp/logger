@@ -17,7 +17,7 @@ type Logger interface {
 	FatalLogger
 	V(level int) InfoLogger
 	Write(p []byte) (n int, err error)
-	WithValues(kv interface{}) Logger
+	WithValues(kv ...interface{}) Logger
 	WithName(name string) Logger
 	WithContext(ctx context.Context) context.Context
 	Flush()
@@ -31,7 +31,7 @@ type InfoLogger interface {
 	Enabled() bool
 }
 
-// debug
+// DebugLogger debug
 type DebugLogger interface {
 	Debug(msg string, fields ...Field)
 	Debugf(format string, v ...interface{})
@@ -66,10 +66,119 @@ type FatalLogger interface {
 	Fatalw(msg string, kv ...interface{})
 }
 
+var _ Logger = &zapLogger{}
+
 // zapLogger is log.Logger that uses zap to log
 type zapLogger struct {
 	zapLogger *zap.Logger
-	InfoLogger
+	infoLogger
+}
+
+//noopInfoLogger is a logger.InfoLogger that's always disabled and does nothing.
+type noopInfoLogger struct {
+
+}
+var disabledInfoLogger = &noopInfoLogger{}
+
+func (n *noopInfoLogger) Info(msg string, fields ...Field){}
+
+func (n *noopInfoLogger)Infof(format string, v ...interface{}){}
+
+func (n *noopInfoLogger)Infow(msg string, kv ...interface{}){}
+
+func (n *noopInfoLogger)Enabled() bool{
+	return false
+}
+func (l *zapLogger) Debug(msg string, fields ...Field) {
+	l.zapLogger.Debug(msg,fields...)
+}
+
+func (l *zapLogger) Debugf(format string, v ...interface{}) {
+	l.zapLogger.Sugar().Debugf(format, v...)
+}
+
+func (l *zapLogger) Debugw(msg string, kv ...interface{}) {
+	l.zapLogger.Sugar().Debugw(msg,kv ...)
+}
+
+func (l *zapLogger) Warn(msg string, fields ...Field) {
+	l.zapLogger.Warn(msg,fields...)
+}
+
+func (l *zapLogger) Warnf(format string, v ...interface{}) {
+	l.zapLogger.Sugar().Warnf(format,v...)
+}
+
+func (l *zapLogger) Warnw(msg string, kv ...interface{}) {
+	l.zapLogger.Sugar().Warnw(msg,kv ...)
+}
+
+func (l *zapLogger) Error(msg string, fields ...Field) {
+	l.zapLogger.Error(msg,fields ...)
+}
+
+func (l *zapLogger) Errorf(format string, v ...interface{}) {
+	l.zapLogger.Sugar().Errorf(format,v...)
+}
+
+func (l *zapLogger) Errorw(msg string, kv ...interface{}) {
+	l.zapLogger.Sugar().Errorw(msg,kv...)
+}
+
+func (l *zapLogger) Fatal(msg string, fields ...Field) {
+	l.zapLogger.Fatal(msg,fields ...)
+}
+
+func (l *zapLogger) Fatalf(format string, v ...interface{}) {
+	l.zapLogger.Sugar().Fatalf(format,v...)
+}
+
+func (l *zapLogger) Fatalw(msg string, kv ...interface{}) {
+	l.zapLogger.Sugar().Fatalw(msg,kv ...)
+}
+
+func (l *zapLogger) V(level int) InfoLogger {
+	if level < 0 || level >1{
+		panic("log level error: valid log level is [0, 1]")
+	}
+	lvl := zapcore.Level(-1 * level)
+	if l.zapLogger.Core().Enabled(lvl) {
+		return &infoLogger{
+			level: lvl,
+			log:   l.zapLogger,
+		}
+	}
+	return disabledInfoLogger
+}
+
+func (l *zapLogger) Write(p []byte) (n int, err error) {
+	l.zapLogger.Info(string(p))
+	return len(p),nil
+}
+
+func (l *zapLogger) WithValues(kv ...interface{}) Logger {
+	newLogger := l.zapLogger.With(handleFields(l.zapLogger,kv)...)
+	return NewLogger(newLogger)
+}
+
+// NewLogger creates a new logr.Logger using the given Zap Logger to log.
+func NewLogger(l *zap.Logger) Logger {
+	return &zapLogger{
+		zapLogger: l,
+		infoLogger: infoLogger{
+			log:   l,
+			level: zap.InfoLevel,
+		},
+	}
+}
+
+func (l *zapLogger) WithName(name string) Logger {
+	newLogger:= l.zapLogger.Named(name)
+	return NewLogger(newLogger)
+}
+
+func (l *zapLogger) Flush() {
+	_ = l.zapLogger.Sync()
 }
 
 type infoLogger struct {
@@ -91,9 +200,9 @@ func New(opts *Options) *zapLogger {
 	if err := zapLevel.UnmarshalText([]byte(opts.Level)); err != nil {
 		zapLevel = zapcore.InfoLevel
 	}
-	encodelLevel := zapcore.CapitalLevelEncoder
+	encodeLevel := zapcore.CapitalLevelEncoder
 	if opts.Format == consoleFormat && opts.EnableColor {
-		encodelLevel = zapcore.CapitalColorLevelEncoder
+		encodeLevel = zapcore.CapitalColorLevelEncoder
 	}
 
 	encoderConfig := zapcore.EncoderConfig{
@@ -104,7 +213,7 @@ func New(opts *Options) *zapLogger {
 		CallerKey:      "call",
 		StacktraceKey:  "stacktrace",
 		LineEnding:     zapcore.DefaultLineEnding,
-		EncodeLevel:    encodelLevel,
+		EncodeLevel:    encodeLevel,
 		EncodeTime:     timeEncoder,
 		EncodeDuration: milliSecondDurationEncoder,
 		EncodeCaller:   zapcore.ShortCallerEncoder,
@@ -132,7 +241,7 @@ func New(opts *Options) *zapLogger {
 	}
 	logger := &zapLogger{
 		zapLogger: l.Named(opts.Name),
-		InfoLogger: &infoLogger{
+		infoLogger: infoLogger{
 			level: zap.InfoLevel,
 			log:   l,
 		},
@@ -160,6 +269,10 @@ func (l *infoLogger) Infof(format string, args ...interface{}) {
 	if checkedEntry := l.log.Check(l.level, fmt.Sprintf(format, args...)); checkedEntry != nil {
 		checkedEntry.Write()
 	}
+}
+
+func (l *zapLogger) WithContext(ctx context.Context) context.Context {
+	return context.WithValue(ctx, logContextKey, l)
 }
 
 func handleFields(l *zap.Logger, args []interface{}, additional ...zap.Field) []zap.Field {
