@@ -6,7 +6,6 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"logger/klog"
-	"sync"
 )
 
 type Logger interface {
@@ -189,8 +188,7 @@ type infoLogger struct {
 
 // 默认logger，引入包即可使用
 var (
-	std = New(NewOptions())
-	mu  sync.Mutex
+	Log = New(NewOptions())
 )
 
 func New(opts *Options) *zapLogger {
