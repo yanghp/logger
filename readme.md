@@ -3,7 +3,11 @@ logger 基于zap的封装
 
 ## Use Cases
 ```go
-func func main() {
+package main
+
+import "github.com/yanghp/logger"
+
+func main() {
     log:= logger.New(logger.NewOptions())
     
     log.Debug("this is debug message")
@@ -11,4 +15,5 @@ func func main() {
     log.Warn("this is warn message")
     log.Error("this is error message")
 }
+
 ```
