@@ -22,7 +22,7 @@ type Logger interface {
 	Flush()
 }
 
-// info
+// InfoLogger info
 type InfoLogger interface {
 	Info(msg string, fields ...Field)
 	Infof(format string, v ...interface{})
@@ -37,28 +37,28 @@ type DebugLogger interface {
 	Debugw(msg string, kv ...interface{})
 }
 
-// warn
+// WarnLogger warn
 type WarnLogger interface {
 	Warn(msg string, fields ...Field)
 	Warnf(format string, v ...interface{})
 	Warnw(msg string, kv ...interface{})
 }
 
-// error
+// ErrorLogger error
 type ErrorLogger interface {
 	Error(msg string, fields ...Field)
 	Errorf(format string, v ...interface{})
 	Errorw(msg string, kv ...interface{})
 }
 
-//panic
+// PanicLogger panic
 type PanicLogger interface {
 	Panic(msg string, fields ...Field)
 	Panicf(format string, v ...interface{})
 	Panicw(msg string, kv ...interface{})
 }
 
-//Fatal
+// FatalLogger fatal
 type FatalLogger interface {
 	Fatal(mgs string, fields ...Field)
 	Fatalf(format string, v ...interface{})
@@ -185,11 +185,6 @@ type infoLogger struct {
 	level zapcore.Level
 	log   *zap.Logger
 }
-
-// 默认logger，引入包即可使用
-var (
-	Log = New(NewOptions())
-)
 
 func New(opts *Options) *zapLogger {
 	if opts == nil {
